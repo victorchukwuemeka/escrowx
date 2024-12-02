@@ -1,6 +1,8 @@
 #![allow(clippy::result_large_err)]
 
+
 use anchor_lang::prelude::*;
+
 
 declare_id!("AsjZ3kWAUSQRNt2pZVeJkywhZ6gpLpHZmJjduPmKZDZZ");
 
@@ -8,63 +10,84 @@ declare_id!("AsjZ3kWAUSQRNt2pZVeJkywhZ6gpLpHZmJjduPmKZDZZ");
 pub mod escrowx {
     use super::*;
 
-  pub fn close(_ctx: Context<CloseEscrowx>) -> Result<()> {
-    Ok(())
-  }
+    pub fn initialize_escrow(ctx :Context<InitializeEscrow>, amount:u64, )->Result<()>
+    {
+      let escrow = &mut ctx.accounts.escrow;
+      escrow.amount = amount;
+      escrow.seller =  *ctx.accounts.seller.key;
+      escrow.buyer =  *ctx.accounts.buyer.key;
+      escrow.status = EscrowStatus::Pending;
+      Ok(())
+    }
 
-  pub fn decrement(ctx: Context<Update>) -> Result<()> {
-    ctx.accounts.escrowx.count = ctx.accounts.escrowx.count.checked_sub(1).unwrap();
-    Ok(())
-  }
+    pub fn complete_escrow(ctx : Context<CompleteEscrow>)->Result<()>
+    {
+      let escrow =  &mut  ctx.accounts.escrow;
+      require!(escrow.status == EscrowStatus::Pending, EscrowError::InvalidStatus);
+      escrow.status = EscrowStatus::Completed;
+      Ok(())
+    }
 
-  pub fn increment(ctx: Context<Update>) -> Result<()> {
-    ctx.accounts.escrowx.count = ctx.accounts.escrowx.count.checked_add(1).unwrap();
-    Ok(())
-  }
-
-  pub fn initialize(_ctx: Context<InitializeEscrowx>) -> Result<()> {
-    Ok(())
-  }
-
-  pub fn set(ctx: Context<Update>, value: u8) -> Result<()> {
-    ctx.accounts.escrowx.count = value.clone();
-    Ok(())
-  }
+    pub fn dispute_escrow(ctx : Context<DisputeEscrow>)->Result<()>
+    {
+      let escrow = &mut  ctx.accounts.escrow;
+      require!(escrow.status == EscrowStatus::Pending, EscrowError::InvalidStatus);
+      escrow.status = EscrowStatus::Disputed;
+      Ok(())
+    }
 }
 
 #[derive(Accounts)]
-pub struct InitializeEscrowx<'info> {
-  #[account(mut)]
-  pub payer: Signer<'info>,
-
-  #[account(
-  init,
-  space = 8 + Escrowx::INIT_SPACE,
-  payer = payer
-  )]
-  pub escrowx: Account<'info, Escrowx>,
-  pub system_program: Program<'info, System>,
+pub struct InitializeEscrow<'info> {
+    #[account(
+        init,
+        payer = buyer,
+        space = 8 + 32 + 32 + 8 + 1
+    )]
+    pub escrow: Account<'info, EscrowAccount>,
+    #[account(mut)]
+    pub buyer: Signer<'info>,
+    pub seller: SystemAccount<'info>,
+    pub system_program: Program<'info, System>,
 }
-#[derive(Accounts)]
-pub struct CloseEscrowx<'info> {
-  #[account(mut)]
-  pub payer: Signer<'info>,
 
-  #[account(
-  mut,
-  close = payer, // close account and return lamports to payer
-  )]
-  pub escrowx: Account<'info, Escrowx>,
-}
+
+
 
 #[derive(Accounts)]
-pub struct Update<'info> {
-  #[account(mut)]
-  pub escrowx: Account<'info, Escrowx>,
+pub struct CompleteEscrow<'info> {
+    #[account(mut)]
+    pub escrow: Account<'info, EscrowAccount>,
+    pub buyer: Signer<'info>,
 }
+
+
+#[derive(Accounts)]
+pub struct DisputeEscrow<'info> {
+    #[account(mut)]
+    pub escrow: Account<'info, EscrowAccount>,
+    pub buyer: Signer<'info>,
+}
+
 
 #[account]
-#[derive(InitSpace)]
-pub struct Escrowx {
-  count: u8,
+pub struct EscrowAccount {
+  pub buyer : Pubkey,
+  pub seller: Pubkey,
+  pub amount: u64,
+  pub status: EscrowStatus,
+} 
+
+
+
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, PartialEq)]
+pub enum EscrowStatus {
+    Pending,
+    Completed,
+    Disputed,
+}
+
+#[error_code]
+pub enum EscrowError {
+    InvalidStatus,
 }
