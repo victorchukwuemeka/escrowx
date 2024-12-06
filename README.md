@@ -69,6 +69,7 @@ Before setting up EscrowX, make sure you have the following installed:
 
 - **Program ID**: [EscrowX Program on Solana](https://solscan.io/account/5f5eRadbvBQFUDhxgM4XJz2dDqF78a4fU63Nwky3E1VN?cluster=devnet)
 - **Cluster**: Devnet (default) for testing and development purposes.
+- **Solana Explorer**: You can also view the program details on Solana Explorer by visiting [this link](https://explorer.solana.com/address/5f5eRadbvBQFUDhxgM4XJz2dDqF78a4fU63Nwky3E1VN?cluster=devnet).
 
 ---
 
