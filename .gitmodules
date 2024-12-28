@@ -1,0 +1,6 @@
+[submodule "escrowx/anchor"]
+	path = escrowx/anchor
+	url = https://github.com/victorchukwuemeka/Q4_sol_viktr
+[submodule "cpi/cpi"]
+	path = cpi/cpi
+	url = ./cpi/cpi/
